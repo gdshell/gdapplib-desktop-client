@@ -1,6 +1,6 @@
 extends Control
 
-const MB_RAITO = 0.000001
+const MB_RAITO : float = 0.000001
 
 var base_url: String = "http://127.0.0.1:8080"
 var package_endpoint: String = base_url+"/package/{package}"
@@ -21,8 +21,7 @@ func _ready() -> void:
     pass
 
 func start_downloading() -> void:
-    print("x ------")
-    print("| started downloading")
+    print("started downloading '", archive, "' ...")
     $Download.request(
         package_endpoint.format({package = archive}),
         [],
@@ -32,35 +31,31 @@ func start_downloading() -> void:
     )
 
 func start_upload() -> void:
-    var content = File.new()
-    content.open(archive, File.READ)
-    var filelen: int = content.get_len()
-    var filecont = content.get_buffer(filelen)
-    content.close()
-    reminder = filelen % chunk_size
-    total_chunks = (filelen / chunk_size) 
+    var file = File.new()
+    file.open(archive, File.READ)
+    var file_len: int = file.get_len()
+    var file_content = file.get_buffer(file_len)
+    file.close()
+    reminder = file_len % chunk_size
+    total_chunks = (file_len / chunk_size) 
     total_chunks += int(reminder != 0)
-    print("Starting upload of ", total_chunks, " chunks (", filelen * MB_RAITO, " MB)")
+    print("Starting upload of ", archive)
+    print("Starting upload of ", total_chunks, " chunks (", file_len * MB_RAITO, " MB)")
     print("Chunk size set to ", chunk_size * MB_RAITO, " MB (", chunk_size, " bytes)")
     for current_chunk in range(start_chunk, total_chunks):
         self.current_chunk = current_chunk
         if uploading == false:
             return
-        upload(filecont, chunk_size * current_chunk, chunk_size * (current_chunk + 1) - 1, filelen, archive)
+        upload(file_content, chunk_size * current_chunk, chunk_size * (current_chunk + 1) - 1, file_len, archive)
         var success = yield(self, "continue_upload")
         
         if !success:
             for retries in range(0, max_retries):
                 print("retrying download of chunk ", current_chunk, " (", retries, "/",max_retries,") ...")
-                upload(filecont, chunk_size * current_chunk, chunk_size * (current_chunk + 1) - 1, filelen, archive)
+                upload(file_content, chunk_size * current_chunk, chunk_size * (current_chunk + 1) - 1, file_len, archive)
                 success = yield(self, "continue_upload")
                 if success:
                     return
-#    if current_chunk == total_chunks - 1 and reminder != 0 :
-#        current_chunk += 1
-#        upload(filecont, chunk_size * current_chunk, chunk_size * current_chunk + reminder - 1, filelen, archive)
-#        yield(self, "continue_upload")
-            
     uploading = false
     print("Upload completed.")
     
@@ -69,8 +64,8 @@ func upload(bytes: PoolByteArray, from : int, to : int, _len: int, archive: Stri
     to = min(to, _len - 1)
     var payload = Marshalls.raw_to_base64(bytes.subarray(from, to))
     var headers = [
-            "Content-Type: message/byterange",
-            "Content-Range: bytes %s-%s/%s" % [from, to, _len],
+            "file-Type: message/byterange",
+            "file-Range: bytes %s-%s/%s" % [from, to, _len],
             "X-Archive: %s" % archive,
         ]
     print("uploading chunk ", current_chunk + 1, "/", total_chunks,
@@ -104,7 +99,7 @@ func _on_Download_request_completed(result: int, response_code: int, headers: Po
         file.open("res://downloaded.zip", File.WRITE)
         file.store_buffer(Marshalls.base64_to_raw(body.get_string_from_utf8()))
         print("downloaded file.")
-        print()
+        print("")
 
 
 func _on_Upload_request_completed(result: int, response_code: int, headers: PoolStringArray, body: PoolByteArray) -> void:
