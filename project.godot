@@ -14,6 +14,10 @@ config/name="gdshell-desktop-client"
 run/main_scene="res://Control.tscn"
 config/icon="res://icon.png"
 
+[editor_plugins]
+
+enabled=PoolStringArray(  )
+
 [physics]
 
 common/enable_pause_aware_picking=true

@@ -6,6 +6,9 @@
 anchor_right = 1.0
 anchor_bottom = 1.0
 script = ExtResource( 1 )
+archive_name = "GDApplibArchive23"
+
+[node name="Authentication" type="HTTPRequest" parent="."]
 
 [node name="Upload" type="HTTPRequest" parent="."]
 use_threads = true
@@ -31,6 +34,7 @@ margin_right = 148.0
 margin_bottom = 20.0
 text = "start downloading"
 
+[connection signal="request_completed" from="Authentication" to="." method="_on_Authentication_request_completed"]
 [connection signal="request_completed" from="Upload" to="." method="_on_Upload_request_completed"]
 [connection signal="request_completed" from="Download" to="." method="_on_Download_request_completed"]
 [connection signal="pressed" from="Button" to="." method="_on_Button_pressed"]
